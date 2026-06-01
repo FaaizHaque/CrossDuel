@@ -203,25 +203,32 @@ export default function GameScreen() {
     <View style={[styles.container, { paddingTop: insets.top }]} testID="game-screen">
       {/* Score bar */}
       <View style={[styles.scoreBar, flashError && styles.scoreBarError]}>
-        <View style={styles.scoreSection}>
-          <Text style={styles.scoreNameYou} numberOfLines={1}>
-            {playerName.toUpperCase()}
-          </Text>
-          <Text style={styles.scoreValueYou}>{myScore}</Text>
-          <Text style={styles.scoreWordCount}>{myWords.length}/15</Text>
+        <View style={styles.scoreRow}>
+          <View style={styles.scoreSection}>
+            <Text style={styles.scoreNameYou} numberOfLines={1}>
+              {playerName.toUpperCase()}
+            </Text>
+            <Text style={[styles.scoreValueYou, myScore >= opponentScore && { color: COLORS.accent }]}>{myScore}</Text>
+            <Text style={styles.scoreWordCount}>{myWords.length}/15</Text>
+          </View>
+          <View style={styles.scoreCenter}>
+            <Text style={styles.scoreVs}>VS</Text>
+            {!wsReady && (
+              <ActivityIndicator size="small" color={COLORS.textMuted} style={{ marginTop: 2 }} />
+            )}
+          </View>
+          <View style={[styles.scoreSection, styles.scoreSectionRight]}>
+            <Text style={styles.scoreNameOpp} numberOfLines={1}>
+              {opponentName.toUpperCase()}
+            </Text>
+            <Text style={[styles.scoreValueOpp, opponentScore > myScore && { color: COLORS.blue }]}>{opponentScore}</Text>
+            <Text style={styles.scoreWordCount}>{opponentWords.length}/15</Text>
+          </View>
         </View>
-        <View style={styles.scoreCenter}>
-          <Text style={styles.scoreVs}>VS</Text>
-          {!wsReady && (
-            <ActivityIndicator size="small" color={COLORS.textMuted} style={{ marginTop: 2 }} />
-          )}
-        </View>
-        <View style={[styles.scoreSection, styles.scoreSectionRight]}>
-          <Text style={styles.scoreNameOpp} numberOfLines={1}>
-            {opponentName.toUpperCase()}
-          </Text>
-          <Text style={styles.scoreValueOpp}>{opponentScore}</Text>
-          <Text style={styles.scoreWordCount}>{opponentWords.length}/15</Text>
+        {/* Progress bar */}
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBarLeft, { width: `${(myWords.length / 15) * 50}%` as any }]} />
+          <View style={[styles.progressBarRight, { width: `${(opponentWords.length / 15) * 50}%` as any }]} />
         </View>
       </View>
 
@@ -265,16 +272,20 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
   },
   scoreBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: COLORS.card,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.cardBorder,
-    paddingVertical: 8,
+    paddingTop: 10,
     paddingHorizontal: 16,
+    paddingBottom: 0,
   },
   scoreBarError: {
     borderBottomColor: COLORS.error,
+  },
+  scoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 10,
   },
   scoreSection: {
     flex: 1,
@@ -293,7 +304,7 @@ const styles = StyleSheet.create({
   scoreValueYou: {
     fontSize: 24,
     fontWeight: '900',
-    color: COLORS.accent,
+    color: '#F5F5F0',
     lineHeight: 28,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
   },
@@ -325,8 +336,25 @@ const styles = StyleSheet.create({
   scoreValueOpp: {
     fontSize: 24,
     fontWeight: '900',
-    color: COLORS.blue,
+    color: '#F5F5F0',
     lineHeight: 28,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
+  },
+  progressBarContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    height: 3,
+    backgroundColor: '#1A1A1A',
+  },
+  progressBarLeft: {
+    height: 3,
+    backgroundColor: '#F5E642',
+    alignSelf: 'flex-start',
+  },
+  progressBarRight: {
+    height: 3,
+    backgroundColor: '#3B82F6',
+    alignSelf: 'flex-end',
+    marginLeft: 'auto',
   },
 });

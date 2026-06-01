@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Sword, Zap, Users, Copy, ArrowRight, RefreshCw } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '@/lib/api/api';
 import { useGameStore } from '@/lib/state/gameStore';
 import * as Haptics from 'expo-haptics';
@@ -278,10 +279,13 @@ export default function DuelsScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero */}
-        <View style={styles.heroSection}>
+        <LinearGradient
+          colors={['#1A1400', '#0A0A0A']}
+          style={styles.heroSection}
+        >
           <View style={styles.heroIconRow}>
             <View style={styles.heroIconBg}>
-              <Sword size={32} color={COLORS.accent} />
+              <Sword size={28} color={COLORS.accent} />
             </View>
           </View>
           <Text style={styles.heroTitle}>CROSS DUEL</Text>
@@ -290,7 +294,7 @@ export default function DuelsScreen() {
           <Text style={styles.heroDesc}>
             Challenge a friend to a live crossword duel. First to complete the most words wins.
           </Text>
-        </View>
+        </LinearGradient>
 
         {/* Name input card */}
         <View style={styles.card}>
@@ -384,7 +388,13 @@ export default function DuelsScreen() {
       {/* Game code card */}
       <Animated.View style={[styles.codeCard, { transform: [{ scale: pulseAnim }] }]}>
         <Text style={styles.codeLabel}>GAME CODE</Text>
-        <Text style={styles.codeValue} testID="game-code">{gameCode}</Text>
+        <View style={styles.codeLetterRow} testID="game-code">
+          {gameCode.split('').map((char, idx) => (
+            <View key={idx} style={styles.codeLetterBox}>
+              <Text style={styles.codeLetterText}>{char}</Text>
+            </View>
+          ))}
+        </View>
         <Text style={styles.codeHint}>Share this code with your opponent</Text>
         <Pressable
           style={({ pressed }) => [styles.copyButton, pressed && styles.copyButtonPressed]}
@@ -518,33 +528,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
     width: '100%',
+    paddingTop: 24,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   heroIconRow: {
     marginBottom: 16,
   },
   heroIconBg: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: '#1A1A0A',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#1A1400',
     borderWidth: 1,
-    borderColor: '#3A3A10',
+    borderColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
   heroTitle: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
-    color: COLORS.textPrimary,
-    letterSpacing: 6,
+    color: COLORS.accent,
+    letterSpacing: 8,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif-condensed',
   },
   heroSubtitle: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
     color: COLORS.textMuted,
-    letterSpacing: 5,
+    letterSpacing: 4,
     marginTop: 4,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
   },

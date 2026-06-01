@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useGameStore } from '@/lib/state/gameStore';
 import { api } from '@/lib/api/api';
+import { Trophy, Circle, Minus } from 'lucide-react-native';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,7 +134,6 @@ export default function ResultsScreen() {
   // Outcome label
   const outcomeLabel = isTie ? 'DRAW' : iAmWinner ? 'VICTORY' : 'DEFEAT';
   const outcomeColor = isTie ? COLORS.accent : iAmWinner ? COLORS.success : COLORS.error;
-  const trophyChar = isTie ? '=' : iAmWinner ? '★' : '○';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="results-screen">
@@ -145,8 +145,30 @@ export default function ResultsScreen() {
         <Animated.View style={{ opacity: fadeAnim }}>
           {/* Trophy / outcome */}
           <View style={styles.heroSection}>
-            <Animated.View style={[styles.trophyCircle, { transform: [{ scale: scaleTrophy }], borderColor: outcomeColor }]}>
-              <Text style={[styles.trophyChar, { color: outcomeColor }]}>{trophyChar}</Text>
+            <Animated.View
+              style={[
+                styles.trophyCircle,
+                {
+                  transform: [{ scale: scaleTrophy }],
+                  borderColor: outcomeColor,
+                  ...(iAmWinner && !isTie
+                    ? {
+                        shadowColor: '#F5E642',
+                        shadowOpacity: 0.5,
+                        shadowRadius: 16,
+                        shadowOffset: { width: 0, height: 0 },
+                      }
+                    : {}),
+                },
+              ]}
+            >
+              {isTie ? (
+                <Minus size={44} color={outcomeColor} />
+              ) : iAmWinner ? (
+                <Trophy size={44} color={outcomeColor} />
+              ) : (
+                <Circle size={44} color={outcomeColor} />
+              )}
             </Animated.View>
             <Text style={[styles.outcomeLabel, { color: outcomeColor }]}>{outcomeLabel}</Text>
             <Text style={styles.outcomeSubtitle}>
@@ -325,11 +347,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
-  },
-  trophyChar: {
-    fontSize: 40,
-    fontWeight: '900',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
   },
   outcomeLabel: {
     fontSize: 36,

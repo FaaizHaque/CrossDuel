@@ -8,10 +8,19 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: useClientOnlyValue(false, true),
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: '#0A0A0A',
           borderTopColor: '#1A1A1A',
           borderTopWidth: 1,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 4,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '700',
+          letterSpacing: 2,
         },
         tabBarActiveTintColor: '#F5E642',
         tabBarInactiveTintColor: '#555555',
@@ -23,9 +32,9 @@ export default function TabLayout() {
         name="two"
         options={{
           title: 'Duels',
-          tabBarLabel: 'Duels',
+          tabBarLabel: 'DUELS',
           tabBarIcon: ({ color }: { color: string }) => (
-            <Ionicons name="flash" size={22} color={color} />
+            <Ionicons name="flash" size={24} color={color} />
           ),
         }}
       />
@@ -33,7 +42,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Practice',
-          tabBarLabel: 'Practice',
+          tabBarLabel: 'PRACTICE',
           tabBarIcon: ({ color }: { color: string }) => (
             <Ionicons name="grid" size={22} color={color} />
           ),

@@ -22,8 +22,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="game" options={{ headerShown: false, gestureEnabled: false }} />
-        <Stack.Screen name="results" options={{ headerShown: false }} />
+        <Stack.Screen name="game" options={{ headerShown: false, gestureEnabled: false, animation: 'fade_from_bottom' }} />
+        <Stack.Screen name="results" options={{ headerShown: false, animation: 'fade_from_bottom' }} />
       </Stack>
     </ThemeProvider>
   );
