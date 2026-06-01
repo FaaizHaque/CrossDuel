@@ -3,7 +3,7 @@ import {
   View,
   Text,
   TextInput,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   Dimensions,
   StyleSheet,
@@ -19,28 +19,30 @@ import { puzzles } from '../puzzles';
 
 const COLORS = {
   background: '#0A0A0A',
-  cellWhite: '#F5F5F0',
+  cellWhite: '#F0ECD8',
   cellBlack: '#1A1A1A',
   cellWordHighlight: '#E8E0C8',
   cellActive: '#F5E642',
-  cellCompleted: '#4CAF50',
+  cellCompleted: '#2A5C3F',
+  cellCompletedBorder: '#3D8A5E',
   cellCompletedText: '#FFFFFF',
-  cellOpponent: '#1E3A5F',
+  cellOpponent: '#1A2B4A',
   cellOpponentBorder: '#3B82F6',
   accent: '#F5E642',
   border: '#333333',
-  borderStrong: '#555555',
+  borderStrong: '#333333',
   textDark: '#0A0A0A',
   textMuted: '#666666',
   textOnDark: '#F5F5F0',
   textNumber: '#555555',
-  textNumberOnGreen: '#FFFFFF',
+  textNumberOnDark: '#AAAAAA',
   buttonBg: '#1E1E1E',
   buttonActiveBg: '#F5E642',
   buttonText: '#999999',
   buttonActiveText: '#0A0A0A',
   scoreBarBg: '#111111',
   scoreBarBorder: '#222222',
+  gridBg: '#0A0A0A',
 };
 
 // ─── Word position map ────────────────────────────────────────────────────────
@@ -100,8 +102,8 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
   const GRID_SIZE = puzzleData.gridSize;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CELL_SIZE = Math.min(
-  Math.floor((SCREEN_WIDTH - 32) / GRID_SIZE),
-  50
+  Math.floor((SCREEN_WIDTH - 24) / GRID_SIZE),
+  44
 );
 const WORD_POSITIONS = puzzleData.wordPositions;
 function isBlackCell(row: number, col: number) {
@@ -598,12 +600,16 @@ const solvedWords = correctWords.length;
     let letterColor = COLORS.textDark;
     let numberColor = COLORS.textNumber;
     if (isCorrectCell) {
-      cellBg = "#d4edda";
+      cellBg = COLORS.cellCompleted;
+      cellBorderColor = COLORS.cellCompletedBorder;
+      letterColor = COLORS.cellCompletedText;
+      numberColor = COLORS.textNumberOnDark;
     }
     else if (isCompleted) {
       cellBg = COLORS.cellCompleted;
+      cellBorderColor = COLORS.cellCompletedBorder;
       letterColor = COLORS.cellCompletedText;
-      numberColor = COLORS.textNumberOnGreen;
+      numberColor = COLORS.textNumberOnDark;
     }
     else if (isOpponent) {
       cellBg = COLORS.cellOpponent;
@@ -618,9 +624,8 @@ const solvedWords = correctWords.length;
       cellBg = COLORS.cellWordHighlight;
     }
     return (
-      <TouchableOpacity
+      <Pressable
         key={key}
-        activeOpacity={0.8}
         onPress={() => handleCellPress(row, col)}
         style={[
           styles.cellWhite,
@@ -628,11 +633,11 @@ const solvedWords = correctWords.length;
         ]}
         testID={`cell-${key}`}
       >
-        {wordNumber !== null && (
+        {wordNumber !== null ? (
           <Text style={[styles.cellNumber, { color: numberColor }]} testID={`cell-number-${key}`}>
             {wordNumber}
           </Text>
-        )}
+        ) : null}
         <TextInput
           ref={(ref) => {
             if (inputRefs.current[row]) inputRefs.current[row][col] = ref;
@@ -652,11 +657,11 @@ const solvedWords = correctWords.length;
           testID={`input-${key}`}
         />
         {letter ? (
-          <Text style={[styles.cellLetter, { color: letterColor }]} testID={`letter-${key}`}>
+          <Text style={[styles.cellLetter, { fontSize: CELL_SIZE * 0.45, color: letterColor }]} testID={`letter-${key}`}>
             {letter}
           </Text>
         ) : null}
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -707,7 +712,7 @@ const solvedWords = correctWords.length;
 
         {/* Direction Toggle */}
         <View style={styles.directionBar}>
-          <TouchableOpacity
+          <Pressable
             onPress={() => handleDirectionToggle('across')}
             style={[styles.directionButton, direction === 'across' && styles.directionButtonActive]}
             testID="direction-across"
@@ -715,9 +720,9 @@ const solvedWords = correctWords.length;
             <Text style={[styles.directionButtonText, direction === 'across' && styles.directionButtonTextActive]}>
               ACROSS
             </Text>
-          </TouchableOpacity>
+          </Pressable>
           <View style={styles.directionDivider} />
-          <TouchableOpacity
+          <Pressable
             onPress={() => handleDirectionToggle('down')}
             style={[styles.directionButton, direction === 'down' && styles.directionButtonActive]}
             testID="direction-down"
@@ -725,7 +730,7 @@ const solvedWords = correctWords.length;
             <Text style={[styles.directionButtonText, direction === 'down' && styles.directionButtonTextActive]}>
               DOWN
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
         {/* Active word info */}
@@ -741,8 +746,10 @@ const solvedWords = correctWords.length;
 
         {/* Grid */}
         <View style={styles.gridWrapper}>
-          <View style={styles.grid} testID="crossword-grid">
-            {Array.from({ length: GRID_SIZE }, (_, rowIndex) => renderRow(rowIndex))}
+          <View style={styles.gridContainer}>
+            <View style={styles.grid} testID="crossword-grid">
+              {Array.from({ length: GRID_SIZE }, (_, rowIndex) => renderRow(rowIndex))}
+            </View>
           </View>
         </View>
         <View style={{
@@ -783,7 +790,7 @@ const solvedWords = correctWords.length;
     <Text style={{ color: "white" }}>
       Great job!
     </Text>
-    <TouchableOpacity
+    <Pressable
   style={{
     marginTop: 12,
     backgroundColor: "#F5E642",
@@ -795,28 +802,28 @@ const solvedWords = correctWords.length;
 
     const nextIndex = (puzzleIndex + 1) % puzzles.length;
     const nextPuzzle = puzzles[nextIndex];
-  
+
     setPuzzleIndex(nextIndex);
-  
+
     setLetterGrid(
       Array.from({ length: nextPuzzle.gridSize }, () =>
         Array(nextPuzzle.gridSize).fill('')
       )
     );
-  
+
     setCorrectWords([]);
     setActiveCell(null);
     setDirection("across");
     setPuzzleFinished(false);
-  
+
     reportedWords.current.clear();
-  
+
   }}
 >
   <Text style={{ fontWeight: "bold", color: "#000" }}>
     Next Puzzle
   </Text>
-</TouchableOpacity>
+</Pressable>
   </View>
 )}
 
@@ -836,16 +843,16 @@ const solvedWords = correctWords.length;
       const number = key.split("_")[0];
 
       return (
-        <TouchableOpacity key={key} onPress={() => jumpToClue(key)}>
+        <Pressable key={key} onPress={() => jumpToClue(key)}>
           <Text
             style={[
               styles.clueText,
               activeClue.startsWith(number + ".") && { color: COLORS.accent }
             ]}
           >
-            {number}. {clue}
+            {number}. {clue as string}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       );
     })}
 
@@ -858,16 +865,16 @@ const solvedWords = correctWords.length;
       const number = key.split("_")[0];
 
       return (
-        <TouchableOpacity key={key} onPress={() => jumpToClue(key)}>
+        <Pressable key={key} onPress={() => jumpToClue(key)}>
           <Text
             style={[
               styles.clueText,
               activeClue.startsWith(number + ".") && { color: COLORS.accent }
             ]}
           >
-            {number}. {clue}
+            {number}. {clue as string}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       );
     })}
 
@@ -1057,9 +1064,12 @@ const styles = StyleSheet.create({
 
   // ── Grid ──────────────────────────────────────────────────────────────────
   gridWrapper: {
-    borderWidth: 2,
-    borderColor: COLORS.borderStrong,
     alignSelf: 'center',
+  },
+  gridContainer: {
+    backgroundColor: '#0A0A0A',
+    padding: 12,
+    borderRadius: 12,
   },
   grid: {
     flexDirection: 'column',
@@ -1071,12 +1081,12 @@ const styles = StyleSheet.create({
   // ── Cells ─────────────────────────────────────────────────────────────────
   cellBlack: {
     backgroundColor: COLORS.cellBlack,
-    borderWidth: 0.5,
-    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderColor: '#1A1A1A',
   },
   cellWhite: {
     backgroundColor: COLORS.cellWhite,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1086,10 +1096,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 1,
     left: 2,
-    fontSize: 10,
+    fontSize: 7,
     fontWeight: '600',
     color: COLORS.textNumber,
-    lineHeight: 12,
+    lineHeight: 9,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
     zIndex: 2,
   },
@@ -1103,7 +1113,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   cellLetter: {
-    fontSize: 22,
     fontWeight: '700',
     color: COLORS.textDark,
     textAlign: 'center',
@@ -1113,28 +1122,30 @@ const styles = StyleSheet.create({
 
   // ── Clue Area ─────────────────────────────────────────────────────────────
   clueArea: {
-    marginTop: 16,
+    marginTop: 8,
+    marginHorizontal: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    width: '100%',
-    maxWidth: '100%',
+    backgroundColor: '#111111',
+    borderRadius: 10,
+    width: '95%',
+    maxWidth: '95%',
   },
   clueLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     color: COLORS.accent,
-    letterSpacing: 4,
-    marginBottom: 4,
+    letterSpacing: 2,
+    marginBottom: 6,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace',
   },
   clueText: {
     fontSize: 14,
-    fontWeight: '400',
-    color: COLORS.textOnDark,
+    fontWeight: '500',
+    color: '#F5F5F0',
     lineHeight: 20,
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+    paddingVertical: 2,
   },
 
   // ── Legend ────────────────────────────────────────────────────────────────
