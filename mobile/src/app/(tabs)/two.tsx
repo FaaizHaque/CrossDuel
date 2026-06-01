@@ -127,7 +127,8 @@ export default function DuelsScreen() {
   }, [setPlayerName]);
 
   const getWsUrl = useCallback(() => {
-    return "ws://localhost:3000";
+    const base = process.env.EXPO_PUBLIC_BACKEND_URL ?? 'http://localhost:3000';
+    return base.replace('https://', 'wss://').replace('http://', 'ws://');
   }, []);
 
   const connectWebSocket = useCallback((sid: string, pid: string, pName: string) => {

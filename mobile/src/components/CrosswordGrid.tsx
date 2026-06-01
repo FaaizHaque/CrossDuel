@@ -11,8 +11,6 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { puzzles } from '../puzzles';
-import { ref, onValue, update } from "firebase/database";
-import { db } from "@/lib/firebase";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -66,26 +64,24 @@ type Direction = 'across' | 'down';
 // ─── Component Interface ──────────────────────────────────────────────────────
 
 interface CrosswordGridProps {
-  puzzle: any;
-  gameCode?: string;
-  playerRole?: "host" | "guest";
+  puzzle?: any;
+  sessionId?: string;
+  playerId?: string;
   // Multiplayer props
   clues?: Record<string, string>;
   completedWords?: string[];
-  onWordComplete?: (wordKey: string, answer: string) => void;
+  onWordComplete?: (wordIndex: number, answer: string) => void;
   isMultiplayer?: boolean;
   myScore?: number;
   opponentScore?: number;
   myName?: string;
   opponentName?: string;
-  opponentWords?: string[];
+  opponentWords?: number[];
 }
 
 export default function CrosswordGrid(props: CrosswordGridProps) {
-  console.log("GAME CODE GRID:", props.gameCode);
   const {
     puzzle,
-    gameCode,
     clues = {},
     completedWords = [],
     onWordComplete,
@@ -261,33 +257,6 @@ const WORD_NUMBERS = generateWordNumbers();
     }, 0);
   
   }, [activeCell]);
-  useEffect(() => {
-
-    if (!gameCode) return;
-  
-    const gameRef = ref(db, "games/" + gameCode);
-  
-    const unsubscribe = onValue(gameRef, (snapshot) => {
-  
-      const data = snapshot.val();
-  
-      if (data?.status === "finished" && !gameOver) {
-
-        setGameOver(true);
-      
-        if (data?.winner && props.playerRole && data.winner === props.playerRole) {
-          alert("YOU WIN — GAME OVER");
-        } else {
-          alert("OPPONENT FINISHED — YOU LOST");
-        }
-      
-      }
-  
-    });
-  
-    return () => unsubscribe();
-  
-  }, [gameCode]);
 
   
   // ── Refs ───────────────────────────────────────────────────────────────────
@@ -312,7 +281,10 @@ const WORD_NUMBERS = generateWordNumbers();
 
   const opponentCells: Set<string> = React.useMemo(() => {
     const set = new Set<string>();
-    for (const wk of opponentWords) {
+    const allKeys = Object.keys(puzzleData.answers || {});
+    for (const idx of opponentWords) {
+      const wk = allKeys[idx];
+      if (!wk) continue;
       // Don't overlay on already-completed (my) cells
       if (!completedWords.includes(wk)) {
         getWordKeyCells(wk).forEach((c) => set.add(c));
@@ -378,40 +350,32 @@ if (correct && answer === correct) {
 
     // prevent duplicates
     if (prev.includes(wordKey)) return prev;
-  
+
     const updated = [...prev, wordKey];
-  
+
     const allAnswers = Object.keys(puzzleData.answers || {});
-  
+
     if (!gameOver && allAnswers.every(w => updated.includes(w))) {
 
       console.log("PUZZLE COMPLETED");
-    
+
       setPuzzleFinished(true);
       setGameOver(true);
       setActiveCell(null);
-    
-      if (props.gameCode && props.playerRole) {
-        update(ref(db, "games/" + props.gameCode), {
-          status: "finished",
-          winner: props.playerRole
-        });
-      }
-    
-      setTimeout(() => {
-        alert("YOU WIN — GAME OVER");
-      }, 200);
-    
+
     }
-  
+
     return updated;
-  
+
   });
 
   reportedWords.current.add(wordKey);
 
   if (onWordComplete) {
-    onWordComplete(wordKey, answer);
+    // Extract numeric wordIndex from key like "5_across" → 4 (0-based)
+    const allKeys = Object.keys(puzzleData.answers || {});
+    const idx = allKeys.indexOf(wordKey);
+    onWordComplete(idx >= 0 ? idx : 0, answer);
   }
 
 }
