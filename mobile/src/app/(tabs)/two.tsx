@@ -268,6 +268,39 @@ export default function DuelsScreen() {
     setError(null);
   }, []);
 
+  const handleTestSolo = useCallback(async () => {
+    const name = getEffectiveName();
+    await savePlayerName(name);
+    setError(null);
+    setMode('creating');
+
+    try {
+      const pid = generatePlayerId();
+      const result = await api.post<CreateGameResponse>('/api/game/create', {
+        playerName: name,
+        playerId: pid,
+      });
+
+      setGame({
+        sessionId: result.sessionId,
+        playerId: pid,
+        playerName: name,
+        playerNumber: result.playerNumber,
+        opponentName: 'Bot',
+        clues: result.clues,
+        status: 'waiting',
+      });
+
+      connectWebSocket(result.sessionId, pid, name);
+
+      // Bot joins immediately — backend will broadcast game_started
+      await api.post(`/api/game/${result.sessionId}/bot-join`, {});
+    } catch (_e) {
+      setError('Failed to start solo test.');
+      setMode('idle');
+    }
+  }, [getEffectiveName, savePlayerName, setGame, connectWebSocket]);
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const renderIdleScreen = () => (
@@ -365,6 +398,15 @@ export default function DuelsScreen() {
             <Text style={styles.statLabel}>LIVE</Text>
           </View>
         </View>
+
+        {/* Solo test link */}
+        <Pressable
+          onPress={handleTestSolo}
+          style={({ pressed }) => [styles.soloTestButton, pressed && { opacity: 0.5 }]}
+          testID="solo-test-button"
+        >
+          <Text style={styles.soloTestText}>▶ Test Solo (single device)</Text>
+        </Pressable>
       </ScrollView>
     </Animated.View>
   );
@@ -896,5 +938,18 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     textAlign: 'center',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
+  },
+  soloTestButton: {
+    alignSelf: 'center',
+    marginTop: 20,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  soloTestText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
 });

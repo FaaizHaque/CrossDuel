@@ -113,6 +113,37 @@ gameRouter.post("/join/:sessionId", async (c) => {
   });
 });
 
+// POST /api/game/:sessionId/bot-join  — solo test: auto-joins a bot as player 2
+gameRouter.post("/:sessionId/bot-join", async (c) => {
+  const { sessionId } = c.req.param();
+
+  const session = await prisma.gameSession.findUnique({ where: { id: sessionId } });
+  if (!session) return c.json({ error: { message: "Session not found" } }, 404);
+  if (session.status !== "waiting")
+    return c.json({ error: { message: "Game already started or finished" } }, 400);
+
+  const startedAt = new Date();
+  const updated = await prisma.gameSession.update({
+    where: { id: sessionId },
+    data: {
+      player2Id: "bot",
+      player2Name: "Bot",
+      status: "active",
+      startedAt,
+    },
+  });
+
+  broadcastToAll(sessionId, {
+    type: "game_started",
+    sessionId,
+    player1Name: updated.player1Name,
+    player2Name: "Bot",
+    startedAt: startedAt.toISOString(),
+  });
+
+  return c.json({ data: { ok: true } });
+});
+
 // GET /api/game/:sessionId
 gameRouter.get("/:sessionId", async (c) => {
   const { sessionId } = c.req.param();
