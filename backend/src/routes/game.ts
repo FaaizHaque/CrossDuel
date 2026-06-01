@@ -181,6 +181,8 @@ gameRouter.post("/:sessionId/word", async (c) => {
     });
   }
 
+  const playerNumber = isPlayer1 ? 1 : 2;
+
   if (!isCorrect) {
     // Apply accuracy penalty
     const updateData = isPlayer1
@@ -198,8 +200,7 @@ gameRouter.post("/:sessionId/word", async (c) => {
     broadcastToAll(sessionId, {
       type: "word_incorrect",
       playerId,
-      wordKey,
-      playerName: isPlayer1 ? session.player1Name : session.player2Name,
+      playerNumber,
       penalty: ACCURACY_PENALTY,
     });
 
@@ -212,6 +213,7 @@ gameRouter.post("/:sessionId/word", async (c) => {
   const speedBonus = calculateSpeedBonus(session.startedAt, now);
   const wordScore = WORD_BASE_SCORE + speedBonus;
   const newWords = [...playerWords, wordKey];
+  const wordIndex = newWords.length - 1;
 
   const updateData = isPlayer1
     ? {
@@ -223,14 +225,10 @@ gameRouter.post("/:sessionId/word", async (c) => {
         player2Score: session.player2Score + wordScore,
       };
 
-  // Check if game is over (all words completed by either player)
-  const p1Words: string[] = JSON.parse(isPlayer1 ? JSON.stringify(newWords) : session.player1Words);
-  const p2Words: string[] = JSON.parse(isPlayer1 ? session.player2Words : JSON.stringify(newWords));
-
-  const allWordsComplete = p1Words.length + p2Words.length >= TOTAL_WORDS;
+  // Check if game is over: one player completed ALL words
   const playerCompletedAll = newWords.length >= TOTAL_WORDS;
 
-  if (playerCompletedAll || allWordsComplete) {
+  if (playerCompletedAll) {
     // Game over
     const finalUpdateData = {
       ...updateData,
@@ -243,9 +241,11 @@ gameRouter.post("/:sessionId/word", async (c) => {
       data: finalUpdateData,
     });
 
-    // Calculate winner
-    const p1FinalScore = isPlayer1 ? updatedSession.player1Score : session.player1Score;
-    const p2FinalScore = isPlayer2 ? updatedSession.player2Score : session.player2Score;
+    // Calculate winner using scores AFTER the update
+    const p1FinalScore = updatedSession.player1Score;
+    const p2FinalScore = updatedSession.player2Score;
+    const p1Words: string[] = JSON.parse(updatedSession.player1Words);
+    const p2Words: string[] = JSON.parse(updatedSession.player2Words);
     const winnerId =
       p1FinalScore >= p2FinalScore ? session.player1Id : session.player2Id;
 
@@ -253,12 +253,11 @@ gameRouter.post("/:sessionId/word", async (c) => {
 
     broadcastToAll(sessionId, {
       type: "game_over",
-      sessionId,
       winnerId,
       player1Score: p1FinalScore,
       player2Score: p2FinalScore,
-      player1Name: session.player1Name,
-      player2Name: session.player2Name,
+      player1Words: p1Words,
+      player2Words: p2Words,
     });
 
     return c.json({
@@ -275,16 +274,17 @@ gameRouter.post("/:sessionId/word", async (c) => {
 
   await prisma.gameSession.update({ where: { id: sessionId }, data: updateData });
 
+  const totalScore = isPlayer1
+    ? session.player1Score + wordScore
+    : session.player2Score + wordScore;
+
   broadcastToAll(sessionId, {
     type: "word_completed",
     playerId,
-    wordKey,
-    playerName: isPlayer1 ? session.player1Name : session.player2Name,
-    wordScore,
-    speedBonus,
-    totalScore: isPlayer1
-      ? session.player1Score + wordScore
-      : session.player2Score + wordScore,
+    playerNumber,
+    wordIndex,
+    score: wordScore,
+    totalScore,
   });
 
   return c.json({

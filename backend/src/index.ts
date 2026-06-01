@@ -6,6 +6,8 @@ import { sampleRouter } from "./routes/sample";
 import { gameRouter } from "./routes/game";
 import { logger } from "hono/logger";
 import { websocketHandler } from "./websocket";
+import { prisma } from "./prisma";
+import { DEFAULT_PUZZLE } from "./puzzleData";
 
 const app = new Hono();
 
@@ -33,6 +35,27 @@ app.use("*", logger());
 
 // Health check endpoint
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Seed / sync the default puzzle on startup
+async function seedPuzzle(): Promise<void> {
+  const answersJson = JSON.stringify(DEFAULT_PUZZLE.answers);
+  const cluesJson = JSON.stringify(DEFAULT_PUZZLE.clues);
+  const existing = await prisma.puzzle.findFirst();
+  if (!existing) {
+    await prisma.puzzle.create({
+      data: { title: DEFAULT_PUZZLE.title, answers: answersJson, clues: cluesJson },
+    });
+    console.log("[seed] Default puzzle created with", Object.keys(DEFAULT_PUZZLE.answers).length, "words");
+  } else if (existing.answers !== answersJson || existing.clues !== cluesJson) {
+    await prisma.puzzle.update({
+      where: { id: existing.id },
+      data: { title: DEFAULT_PUZZLE.title, answers: answersJson, clues: cluesJson },
+    });
+    console.log("[seed] Default puzzle updated with", Object.keys(DEFAULT_PUZZLE.answers).length, "words");
+  }
+}
+
+seedPuzzle().catch((err) => console.error("[seed] Failed to seed puzzle:", err));
 
 // Routes
 app.route("/api/sample", sampleRouter);
