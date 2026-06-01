@@ -1,0 +1,12 @@
+__MACOSX/
+Archive.zip
+*.db
+*.db-shm
+*.db-wal
+node_modules/
+mobile/node_modules/
+backend/node_modules/
+mobile/.expo/
+mobile/ios/build/
+mobile/android/.gradle/
+mobile/android/app/build/

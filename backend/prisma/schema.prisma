@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Puzzle {
+  id           String        @id @default(cuid())
+  title        String        @default("Daily Challenge")
+  answers      String        // JSON: Record<string, string> mapping "wordKey" -> "ANSWER"
+  clues        String        // JSON: Record<string, string> mapping "wordKey" -> "clue text"
+  createdAt    DateTime      @default(now())
+  gameSessions GameSession[]
+}
+
+model GameSession {
+  id           String    @id @default(cuid())
+  puzzleId     String
+  puzzle       Puzzle    @relation(fields: [puzzleId], references: [id])
+  status       String    @default("waiting") // waiting | active | finished
+  player1Id    String    @default("")
+  player2Id    String    @default("")
+  player1Name  String    @default("Player 1")
+  player2Name  String    @default("Player 2")
+  player1Score Int       @default(0)
+  player2Score Int       @default(0)
+  player1Words String    @default("[]") // JSON: string[] of completed word keys
+  player2Words String    @default("[]") // JSON: string[] of completed word keys
+  player1Errors Int      @default(0)
+  player2Errors Int      @default(0)
+  winnerId     String?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime  @default(now())
+}
