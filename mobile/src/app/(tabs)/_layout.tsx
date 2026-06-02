@@ -1,13 +1,11 @@
-import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useClientOnlyValue } from '@/lib/useClientOnlyValue';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: useClientOnlyValue(false, true),
+        headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: '#0A0A0A',
