@@ -82,7 +82,6 @@ export default function DuelsScreen() {
 
   const wsRef = useRef<WebSocket | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Load persisted player name
   useEffect(() => {
@@ -92,15 +91,6 @@ export default function DuelsScreen() {
         setPlayerName(name);
       }
     });
-  }, []);
-
-  // Fade in on mount
-  useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
   }, []);
 
   // Pulse animation for waiting state
@@ -304,7 +294,7 @@ export default function DuelsScreen() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const renderIdleScreen = () => (
-    <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 24 }]}
@@ -408,7 +398,7 @@ export default function DuelsScreen() {
           <Text style={styles.soloTestText}>▶ Test Solo (single device)</Text>
         </Pressable>
       </ScrollView>
-    </Animated.View>
+    </View>
   );
 
   const renderCreatingScreen = () => (
