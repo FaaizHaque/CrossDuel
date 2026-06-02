@@ -80,8 +80,9 @@ gameRouter.post("/join/:sessionId", async (c) => {
     return c.json({ error: { message: "Already in this game" } }, 400);
 
   const startedAt = new Date();
+  const fullSessionId = session.id;
   const updated = await prisma.gameSession.update({
-    where: { id: sessionId },
+    where: { id: fullSessionId },
     data: {
       player2Id: playerId,
       player2Name: playerName,
@@ -91,9 +92,9 @@ gameRouter.post("/join/:sessionId", async (c) => {
   });
 
   // Broadcast to player 1 that game started
-  broadcastToAll(sessionId, {
+  broadcastToAll(fullSessionId, {
     type: "game_started",
-    sessionId,
+    sessionId: fullSessionId,
     player1Name: updated.player1Name,
     player2Name: updated.player2Name,
     startedAt: startedAt.toISOString(),
@@ -101,7 +102,7 @@ gameRouter.post("/join/:sessionId", async (c) => {
 
   return c.json({
     data: {
-      sessionId: session.id,
+      sessionId: fullSessionId,
       playerId,
       playerNumber: 2,
       clues: DEFAULT_PUZZLE.clues,
@@ -244,7 +245,9 @@ gameRouter.post("/:sessionId/word", async (c) => {
   const speedBonus = calculateSpeedBonus(session.startedAt, now);
   const wordScore = WORD_BASE_SCORE + speedBonus;
   const newWords = [...playerWords, wordKey];
-  const wordIndex = newWords.length - 1;
+  // Index of this word in the puzzle's ordered key list (for opponent grid rendering)
+  const allPuzzleKeys = Object.keys(DEFAULT_PUZZLE.answers);
+  const wordIndex = allPuzzleKeys.indexOf(wordKey);
 
   const updateData = isPlayer1
     ? {
@@ -291,10 +294,13 @@ gameRouter.post("/:sessionId/word", async (c) => {
       player2Words: p2Words,
     });
 
+    const totalScoreGameOver = isPlayer1 ? p1FinalScore : p2FinalScore;
+
     return c.json({
       data: {
         correct: true,
         wordScore,
+        totalScore: totalScoreGameOver,
         speedBonus,
         wordKey,
         gameOver: true,
@@ -314,7 +320,8 @@ gameRouter.post("/:sessionId/word", async (c) => {
     playerId,
     playerNumber,
     wordIndex,
-    score: wordScore,
+    wordKey,
+    wordScore,
     totalScore,
   });
 
@@ -322,6 +329,7 @@ gameRouter.post("/:sessionId/word", async (c) => {
     data: {
       correct: true,
       wordScore,
+      totalScore,
       speedBonus,
       wordKey,
       gameOver: false,
@@ -339,10 +347,12 @@ gameRouter.get("/:sessionId/results", async (c) => {
     data: {
       sessionId: session.id,
       status: session.status,
+      player1Id: session.player1Id,
       player1Name: session.player1Name,
       player1Score: session.player1Score,
       player1Words: JSON.parse(session.player1Words) as string[],
       player1Errors: session.player1Errors,
+      player2Id: session.player2Id,
       player2Name: session.player2Name,
       player2Score: session.player2Score,
       player2Words: JSON.parse(session.player2Words) as string[],

@@ -17,7 +17,10 @@ import { puzzles } from '@/puzzles';
 
 interface WordSubmitResponse {
   correct: boolean;
-  score: number;
+  wordScore?: number;
+  totalScore?: number;
+  gameOver?: boolean;
+  winnerId?: string;
 }
 
 const COLORS = {
@@ -163,17 +166,21 @@ export default function GameScreen() {
     async (wordIndex: number, answer: string) => {
       if (!sessionId || !playerId) return;
 
+      // Convert the numeric index back to the word key for the backend
+      const allKeys = Object.keys(puzzle.answers);
+      const wordKey = allKeys[wordIndex] ?? '';
+      if (!wordKey) return;
+
       try {
         const res = await api.post<WordSubmitResponse>(
           `/api/game/${sessionId}/word`,
-          { playerId, wordIndex, answer }
+          { playerId, wordKey, answer }
         );
 
         if (res?.correct) {
           addMyWord(wordIndex);
-          if (typeof res.score === 'number') updateMyScore(res.score);
+          if (typeof res.totalScore === 'number') updateMyScore(res.totalScore);
         } else {
-          // Flash error indicator
           setFlashError(true);
           setTimeout(() => setFlashError(false), 600);
         }
@@ -183,7 +190,7 @@ export default function GameScreen() {
         setTimeout(() => setFlashError(false), 600);
       }
     },
-    [sessionId, playerId, addMyWord, updateMyScore]
+    [sessionId, playerId, puzzle, addMyWord, updateMyScore]
   );
 
   // ── Guard: no session ───────────────────────────────────────────────────────
