@@ -59,6 +59,11 @@
     "typescript": "~5.8.3"
   },
   "private": true,
+  "expo": {
+    "autolinking": {
+      "exclude": ["expo-image", "expo-image-manipulator", "expo-image-picker", "expo-camera", "expo-video", "expo-av", "expo-notifications", "expo-location", "expo-media-library"]
+    }
+  },
   "overrides": {
     "react-native-css-interop": "0.1.22",
     "react-native-reanimated": "3.17.4"
