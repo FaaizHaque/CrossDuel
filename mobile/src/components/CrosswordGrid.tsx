@@ -314,6 +314,10 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     const letter = text.slice(-1).toUpperCase();
     if (!letter || !/[A-Z]/.test(letter)) return;
 
+    // Clear the source TextInput imperatively — avoids React reconciliation
+    // which on iOS new-arch fires a spurious Backspace key event
+    inputRefs.current[_row]?.[_col]?.clear();
+
     // Always write to the VISUALLY active cell — keyboard focus may lag behind
     const cell = activeCellRef.current;
     if (!cell) return;
@@ -344,7 +348,6 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     if (nextCell) {
       setActiveCell(nextCell);
       activeCellRef.current = nextCell;
-      // No programmatic focus needed — next keystroke goes to activeCellRef anyway
     }
   }, []);
 
@@ -516,7 +519,6 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
             onFocus={() => handleCellFocus(row, col)}
             onChangeText={text => handleCellChange(row, col, text)}
             onKeyPress={({ nativeEvent }) => handleCellKeyPress(row, col, nativeEvent.key)}
-            value=""
             autoCapitalize="characters"
             autoCorrect={false}
             autoComplete="off"
