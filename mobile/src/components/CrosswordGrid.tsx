@@ -335,12 +335,10 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     });
     if (isInCorrect || completedCellsRef.current.has(key)) return;
 
-    let nextGrid: string[][] = [];
-    setLetterGrid(prev => {
-      nextGrid = prev.map(r => [...r]);
-      nextGrid[row][col] = letter;
-      return nextGrid;
-    });
+    // Build the updated grid synchronously from the always-current ref
+    const nextGrid = letterGridRef.current.map(r => [...r]);
+    nextGrid[row][col] = letter;
+    setLetterGrid(nextGrid);
 
     checkWordCompletionRef.current?.(row, col, dir, nextGrid);
 
