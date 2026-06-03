@@ -286,7 +286,12 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     const dir = directionRef.current;
 
     if (curr && curr.row === row && curr.col === col) {
-      // Same cell tapped — skip (keyboard is already showing)
+      // Same cell tapped again — toggle direction
+      const newDir: Direction = dir === 'across' ? 'down' : 'across';
+      if (hasWordInDirection(row, col, newDir)) {
+        setDirection(newDir);
+        directionRef.current = newDir;
+      }
       return;
     }
 
@@ -303,12 +308,16 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     }
   }, []);
 
-  const handleCellChange = useCallback((row: number, col: number, text: string) => {
+  const handleCellChange = useCallback((_row: number, _col: number, text: string) => {
     if (gameOverRef.current) return;
 
     const letter = text.slice(-1).toUpperCase();
     if (!letter || !/[A-Z]/.test(letter)) return;
 
+    // Always write to the VISUALLY active cell — keyboard focus may lag behind
+    const cell = activeCellRef.current;
+    if (!cell) return;
+    const { row, col } = cell;
     const dir = directionRef.current;
     const key = `${row},${col}`;
 
@@ -335,15 +344,17 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
     if (nextCell) {
       setActiveCell(nextCell);
       activeCellRef.current = nextCell;
-      // Programmatic focus works here — keyboard is already visible from user's direct tap
-      setTimeout(() => {
-        inputRefs.current[nextCell.row]?.[nextCell.col]?.focus();
-      }, 0);
+      // No programmatic focus needed — next keystroke goes to activeCellRef anyway
     }
   }, []);
 
-  const handleCellKeyPress = useCallback((row: number, col: number, key: string) => {
+  const handleCellKeyPress = useCallback((_row: number, _col: number, key: string) => {
     if (key !== 'Backspace') return;
+
+    // Always act on the VISUALLY active cell — keyboard focus may lag behind
+    const cell = activeCellRef.current;
+    if (!cell) return;
+    const { row, col } = cell;
 
     const dir = directionRef.current;
     const grid = letterGridRef.current;
@@ -365,9 +376,6 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
         });
         setActiveCell(prevCell);
         activeCellRef.current = prevCell;
-        setTimeout(() => {
-          inputRefs.current[prevCell.row]?.[prevCell.col]?.focus();
-        }, 0);
       }
     }
   }, []);
@@ -375,10 +383,7 @@ export default function CrosswordGrid(props: CrosswordGridProps) {
   const handleDirectionToggle = useCallback((dir: Direction) => {
     setDirection(dir);
     directionRef.current = dir;
-    // Re-focus active cell so keyboard stays visible
-    const cell = activeCellRef.current;
-    if (cell) focusCellInput(cell.row, cell.col);
-  }, [focusCellInput]);
+  }, []);
 
   // ── Clue navigation ────────────────────────────────────────────────────────
 
