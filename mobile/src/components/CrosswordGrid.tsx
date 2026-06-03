@@ -727,8 +727,10 @@ const styles = StyleSheet.create({
   cellWhite: { backgroundColor: COLORS.cellWhite, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   cellNumber: { position: 'absolute', top: 1, left: 2, fontSize: 7, fontWeight: '600', lineHeight: 9, fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace', zIndex: 2 },
   cellLetter: { fontWeight: '700', textAlign: 'center', fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace', zIndex: 2 },
-  // Transparent full-cell overlay — user touches this directly, keyboard always appears
-  cellInput: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0, zIndex: 3 },
+  // Full-cell overlay — user touches this directly, keyboard always appears.
+  // NOT opacity:0 — Fabric (new arch) makes opacity:0 views non-interactive.
+  // Instead: transparent color + no background = visually invisible, still touchable.
+  cellInput: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, color: 'transparent', backgroundColor: 'transparent', zIndex: 3 },
 
   clueArea: { marginTop: 8, marginHorizontal: 8, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#111111', borderRadius: 10, width: '95%', maxWidth: '95%' },
   clueLabel: { fontSize: 11, fontWeight: '700', color: COLORS.accent, letterSpacing: 2, marginBottom: 6, fontFamily: Platform.OS === 'ios' ? 'System' : 'monospace' },
