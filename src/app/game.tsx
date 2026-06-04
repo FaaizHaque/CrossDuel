@@ -3,9 +3,7 @@ import {
   Dimensions,
   FlatList,
   Keyboard,
-  KeyboardAvoidingView,
   Modal,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -219,11 +217,6 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.container} testID="game-screen">
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-      >
       {/* Hidden keyboard input */}
       <TextInput
         ref={inputRef}
@@ -320,73 +313,79 @@ export default function GameScreen() {
         </View>
       </View>
 
-      {/* ── Clue Tabs ── */}
-      <View style={styles.clueSection}>
-        <View style={styles.clueTabs}>
+      {/* ── Clue list OR Done bar depending on keyboard state ── */}
+      {keyboardVisible ? (
+        /* When keyboard is open: show Done bar instead of clue list */
+        <View style={styles.doneBar} testID="done-bar">
+          <Text style={styles.doneBarHint} numberOfLines={1}>
+            {activeWord
+              ? `${activeWord.number}${activeWord.direction === 'across' ? 'A' : 'D'} · ${activeWord.clue}`
+              : 'Tap a cell'}
+          </Text>
           <TouchableOpacity
-            style={[styles.clueTab, clueTab === 'across' && styles.clueTabActive]}
-            onPress={() => setClueTab('across')}
-            testID="tab-across"
+            style={styles.doneButton}
+            onPress={handleDone}
+            testID="done-button"
+            activeOpacity={0.8}
           >
-            <Text style={[styles.clueTabText, clueTab === 'across' && styles.clueTabTextActive]}>
-              ACROSS
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.clueTab, clueTab === 'down' && styles.clueTabActive]}
-            onPress={() => setClueTab('down')}
-            testID="tab-down"
-          >
-            <Text style={[styles.clueTabText, clueTab === 'down' && styles.clueTabTextActive]}>
-              DOWN
-            </Text>
+            <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
         </View>
+      ) : (
+        /* When keyboard is hidden: show full clue list */
+        <View style={styles.clueSection}>
+          <View style={styles.clueTabs}>
+            <TouchableOpacity
+              style={[styles.clueTab, clueTab === 'across' && styles.clueTabActive]}
+              onPress={() => setClueTab('across')}
+              testID="tab-across"
+            >
+              <Text style={[styles.clueTabText, clueTab === 'across' && styles.clueTabTextActive]}>
+                ACROSS
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.clueTab, clueTab === 'down' && styles.clueTabActive]}
+              onPress={() => setClueTab('down')}
+              testID="tab-down"
+            >
+              <Text style={[styles.clueTabText, clueTab === 'down' && styles.clueTabTextActive]}>
+                DOWN
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-        <FlatList
-          ref={clueListRef}
-          data={clueList}
-          keyExtractor={item => item.id}
-          horizontal={false}
-          showsVerticalScrollIndicator={false}
-          style={styles.clueList}
-          onScrollToIndexFailed={() => {}}
-          renderItem={({ item }) => {
-            const isActive = item.id === state.selectedWordId;
-            const isSolved = state.solvedWords[item.id]?.isCorrect;
-            return (
-              <TouchableOpacity
-                style={[styles.clueRow, isActive && styles.clueRowActive]}
-                onPress={() => handleSelectWord(item.id)}
-                testID={`clue-${item.id}`}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.clueNumberBadge, isActive && styles.clueNumberBadgeActive, isSolved && styles.clueNumberBadgeSolved]}>
-                  <Text style={[styles.clueNumberBadgeText, isActive && styles.clueNumberBadgeTextActive]}>
-                    {item.number}
+          <FlatList
+            ref={clueListRef}
+            data={clueList}
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            style={styles.clueList}
+            onScrollToIndexFailed={() => {}}
+            renderItem={({ item }) => {
+              const isActive = item.id === state.selectedWordId;
+              const isSolved = state.solvedWords[item.id]?.isCorrect;
+              return (
+                <TouchableOpacity
+                  style={[styles.clueRow, isActive && styles.clueRowActive]}
+                  onPress={() => handleSelectWord(item.id)}
+                  testID={`clue-${item.id}`}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.clueNumberBadge, isActive && styles.clueNumberBadgeActive, isSolved && styles.clueNumberBadgeSolved]}>
+                    <Text style={[styles.clueNumberBadgeText, isActive && styles.clueNumberBadgeTextActive]}>
+                      {item.number}
+                    </Text>
+                  </View>
+                  <Text style={[styles.clueRowText, isActive && styles.clueRowTextActive, isSolved && styles.clueRowTextSolved]} numberOfLines={2}>
+                    {item.clue}
                   </Text>
-                </View>
-                <Text style={[styles.clueRowText, isActive && styles.clueRowTextActive, isSolved && styles.clueRowTextSolved]} numberOfLines={2}>
-                  {item.clue}
-                </Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
-
-      {/* ── Done Pill Button (floating above keyboard) ── */}
-      {keyboardVisible && (
-        <TouchableOpacity
-          style={styles.donePill}
-          onPress={handleDone}
-          testID="done-button"
-          activeOpacity={0.85}
-        >
-          <Text style={styles.donePillText}>Done</Text>
-        </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>
       )}
-      </KeyboardAvoidingView>
 
       {/* ── Completion Modal ── */}
       <Modal
@@ -423,27 +422,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F3EE',
   },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  donePill: {
-    position: 'absolute',
-    bottom: 8,
-    alignSelf: 'center',
-    backgroundColor: '#2D6A4F',
-    paddingHorizontal: 32,
+  doneBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    borderTopWidth: 1,
+    borderTopColor: '#C8E6C9',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 100,
+    gap: 12,
   },
-  donePillText: {
+  doneBarHint: {
+    flex: 1,
+    fontFamily: 'Nunito_400Regular',
+    fontSize: 13,
+    color: '#374151',
+  },
+  doneButton: {
+    backgroundColor: '#2D6A4F',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  doneButtonText: {
     fontFamily: 'Nunito_700Bold',
-    fontSize: 16,
+    fontSize: 15,
     color: '#FFFFFF',
   },
   hiddenInput: {
@@ -587,7 +590,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
   },
   cellCorrect: {
-    backgroundColor: '#FFF3CD',
+    backgroundColor: '#C8E6C9',
   },
   cellNumber: {
     position: 'absolute',
@@ -667,7 +670,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2D6A4F',
   },
   clueNumberBadgeSolved: {
-    backgroundColor: '#FFF3CD',
+    backgroundColor: '#C8E6C9',
   },
   clueNumberBadgeText: {
     fontFamily: 'Nunito_700Bold',
