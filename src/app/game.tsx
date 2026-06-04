@@ -223,7 +223,7 @@ export default function GameScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={[styles.container, keyboardVisible && { paddingBottom: keyboardHeight }]} testID="game-screen">
+    <SafeAreaView style={styles.container} testID="game-screen">
       {/* Hidden keyboard input */}
       <TextInput
         ref={inputRef}
@@ -320,26 +320,8 @@ export default function GameScreen() {
         </View>
       </View>
 
-      {/* ── Clue list OR Done bar depending on keyboard state ── */}
-      {keyboardVisible ? (
-        /* When keyboard is open: show Done bar instead of clue list */
-        <View style={styles.doneBar} testID="done-bar">
-          <Text style={styles.doneBarHint} numberOfLines={1}>
-            {activeWord
-              ? `${activeWord.number}${activeWord.direction === 'across' ? 'A' : 'D'} · ${activeWord.clue}`
-              : 'Tap a cell'}
-          </Text>
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={handleDone}
-            testID="done-button"
-            activeOpacity={0.8}
-          >
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /* When keyboard is hidden: show full clue list */
+      {/* ── Clue list (always in flow, hidden when keyboard open) ── */}
+      {!keyboardVisible && (
         <View style={styles.clueSection}>
           <View style={styles.clueTabs}>
             <TouchableOpacity
@@ -394,6 +376,25 @@ export default function GameScreen() {
         </View>
       )}
 
+      {/* ── Done bar: absolutely pinned just above keyboard ── */}
+      {keyboardVisible && (
+        <View style={[styles.doneBar, { bottom: keyboardHeight }]} testID="done-bar">
+          <Text style={styles.doneBarHint} numberOfLines={1}>
+            {activeWord
+              ? `${activeWord.number}${activeWord.direction === 'across' ? 'A' : 'D'} · ${activeWord.clue}`
+              : 'Tap a cell'}
+          </Text>
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={handleDone}
+            testID="done-button"
+            activeOpacity={0.8}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* ── Completion Modal ── */}
       <Modal
         visible={showComplete}
@@ -430,14 +431,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#F7F3EE',
   },
   doneBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0FDF4',
     borderTopWidth: 1,
     borderTopColor: '#C8E6C9',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     gap: 12,
+    zIndex: 100,
   },
   doneBarHint: {
     flex: 1,
