@@ -119,6 +119,7 @@ export default function GameScreen() {
   const [clueTab, setClueTab] = useState<Direction>('across');
   const [showComplete, setShowComplete] = useState<boolean>(false);
   const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
   const inputRef = useRef<TextInput>(null);
   const clueListRef = useRef<FlatList<PuzzleWord>>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -140,8 +141,14 @@ export default function GameScreen() {
 
   // Keyboard visibility
   useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      setKeyboardVisible(true);
+      setKeyboardHeight(e.endCoordinates.height);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+      setKeyboardHeight(0);
+    });
     return () => {
       showSub.remove();
       hideSub.remove();
@@ -216,7 +223,7 @@ export default function GameScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} testID="game-screen">
+    <SafeAreaView style={[styles.container, keyboardVisible && { paddingBottom: keyboardHeight }]} testID="game-screen">
       {/* Hidden keyboard input */}
       <TextInput
         ref={inputRef}
