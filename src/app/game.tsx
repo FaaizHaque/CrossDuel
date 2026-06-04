@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } 
 import {
   Dimensions,
   FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -27,7 +30,8 @@ type Action =
   | { type: 'SELECT_CELL'; row: number; col: number }
   | { type: 'ENTER_LETTER'; letter: string }
   | { type: 'BACKSPACE' }
-  | { type: 'SELECT_WORD'; wordId: string };
+  | { type: 'SELECT_WORD'; wordId: string }
+  | { type: 'DESELECT' };
 
 function gameReducer(state: CrosswordState, action: Action): CrosswordState {
   switch (action.type) {
@@ -65,6 +69,9 @@ function gameReducer(state: CrosswordState, action: Action): CrosswordState {
       if (!word) return state;
       const newState: CrosswordState = { ...state, selectedWordId: word.id, direction: word.direction };
       return selectCell(newState, word.row, word.col);
+    }
+    case 'DESELECT': {
+      return { ...state, selectedCell: null, selectedWordId: null };
     }
     default:
       return state;
@@ -113,6 +120,7 @@ export default function GameScreen() {
   const [seconds, setSeconds] = useState<number>(0);
   const [clueTab, setClueTab] = useState<Direction>('across');
   const [showComplete, setShowComplete] = useState<boolean>(false);
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
   const inputRef = useRef<TextInput>(null);
   const clueListRef = useRef<FlatList<PuzzleWord>>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -131,6 +139,16 @@ export default function GameScreen() {
   useEffect(() => {
     if (state.isComplete) setShowComplete(true);
   }, [state.isComplete]);
+
+  // Keyboard visibility
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   // Active word & clue
   const activeWord = useMemo(
@@ -194,8 +212,18 @@ export default function GameScreen() {
 
   const progressPercent = state.totalWords > 0 ? state.correctCount / state.totalWords : 0;
 
+  const handleDone = useCallback(() => {
+    inputRef.current?.blur();
+    dispatch({ type: 'DESELECT' });
+  }, []);
+
   return (
     <SafeAreaView style={styles.container} testID="game-screen">
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
       {/* Hidden keyboard input */}
       <TextInput
         ref={inputRef}
@@ -347,6 +375,19 @@ export default function GameScreen() {
         />
       </View>
 
+      {/* ── Done Pill Button (floating above keyboard) ── */}
+      {keyboardVisible && (
+        <TouchableOpacity
+          style={styles.donePill}
+          onPress={handleDone}
+          testID="done-button"
+          activeOpacity={0.85}
+        >
+          <Text style={styles.donePillText}>Done</Text>
+        </TouchableOpacity>
+      )}
+      </KeyboardAvoidingView>
+
       {/* ── Completion Modal ── */}
       <Modal
         visible={showComplete}
@@ -381,6 +422,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F7F3EE',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  donePill: {
+    position: 'absolute',
+    bottom: 8,
+    alignSelf: 'center',
+    backgroundColor: '#2D6A4F',
+    paddingHorizontal: 32,
+    paddingVertical: 10,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 100,
+  },
+  donePillText: {
+    fontFamily: 'Nunito_700Bold',
+    fontSize: 16,
+    color: '#FFFFFF',
   },
   hiddenInput: {
     position: 'absolute',
@@ -423,7 +487,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Nunito_700Bold',
     fontSize: 16,
     color: '#F4A261',
-    width: 40,
+    width: 60,
     textAlign: 'right',
   },
 
@@ -523,7 +587,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
   },
   cellCorrect: {
-    backgroundColor: '#C8E6C9',
+    backgroundColor: '#FFF3CD',
   },
   cellNumber: {
     position: 'absolute',
@@ -603,7 +667,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2D6A4F',
   },
   clueNumberBadgeSolved: {
-    backgroundColor: '#C8E6C9',
+    backgroundColor: '#FFF3CD',
   },
   clueNumberBadgeText: {
     fontFamily: 'Nunito_700Bold',
