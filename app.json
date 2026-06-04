@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Cross-Duel",
+    "slug": "cross-duel",
+    "scheme": "crossduel",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "ios": { "supportsTablet": false, "bundleIdentifier": "com.crossduel.app" },
+    "android": { "package": "com.crossduel.app", "adaptiveIcon": { "backgroundColor": "#FFFFFF" } },
+    "plugins": ["expo-router", "expo-font"],
+    "experiments": { "typedRoutes": true }
+  }
+}
