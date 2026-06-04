@@ -1,21 +1,22 @@
 {
-  "name": "crossduelfresh",
+  "name": "cross-duel",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.4.2",
-    "expo": "~56.0.8",
-    "expo-font": "^56.0.5",
-    "expo-router": "^56.2.8",
-    "expo-status-bar": "~56.0.4",
-    "react": "19.2.3",
-    "react-native": "0.85.3",
-    "react-native-safe-area-context": "^5.8.0",
-    "react-native-screens": "^4.25.2"
+    "expo": "~53.0.0",
+    "expo-font": "~13.3.1",
+    "expo-router": "~4.0.0",
+    "expo-splash-screen": "~0.29.0",
+    "expo-status-bar": "~2.2.3",
+    "react": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.4.0"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "@types/react": "~18.3.12",
+    "typescript": "~5.3.3"
   },
   "scripts": {
     "start": "expo start",
