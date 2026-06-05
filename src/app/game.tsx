@@ -50,10 +50,13 @@ function gameReducer(state: CrosswordState, action: Action): CrosswordState {
       const [row, col] = state.selectedCell;
       const cell = state.cells[row]?.[col];
       if (cell && cell.letter) {
-        // Clear current cell
-        return clearCell(state, row, col);
+        // Clear the current letter, then move the cursor back one cell.
+        const cleared = clearCell(state, row, col);
+        const prev = getPrevCell(cleared);
+        if (prev) return selectCell(cleared, prev[0], prev[1]);
+        return cleared;
       } else {
-        // Move to previous cell and clear it
+        // Current cell empty: move to previous cell and clear it.
         const prev = getPrevCell(state);
         if (prev) {
           const cleared = clearCell(state, prev[0], prev[1]);
