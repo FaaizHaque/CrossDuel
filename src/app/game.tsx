@@ -22,6 +22,12 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 16;
 const CELL_SIZE = Math.floor((SCREEN_WIDTH - GRID_PADDING * 2) / NATURE_PUZZLE.gridSize);
 
+// Single placeholder char kept in the hidden input so Backspace is always
+// detectable via onChangeText (the input never sits truly empty). The input
+// is off-screen, so the character is never visible; only [a-zA-Z] is treated
+// as real typed input, so the sentinel is never mistaken for a letter.
+const INPUT_SENTINEL = '.';
+
 // ─── Reducer ────────────────────────────────────────────────────────────────
 
 type Action =
@@ -190,20 +196,29 @@ export default function GameScreen() {
     inputRef.current?.focus();
   }, []);
 
+  // The hidden input always holds a single sentinel char. Typing makes the
+  // text longer; backspace deletes the sentinel and makes it empty. Detecting
+  // both through onChangeText is far more reliable than onKeyPress for
+  // Backspace, which mobile keyboards often skip on an empty field.
   const handleTextChange = useCallback((text: string) => {
-    if (!text) return;
-    const last = text[text.length - 1];
-    if (/[a-zA-Z]/.test(last)) {
-      dispatch({ type: 'ENTER_LETTER', letter: last.toUpperCase() });
+    if (text.length === 0) {
+      // Sentinel was deleted → backspace.
+      dispatch({ type: 'BACKSPACE' });
+    } else {
+      // Strip one sentinel occurrence; whatever remains is the typed letter.
+      const idx = text.indexOf(INPUT_SENTINEL);
+      const typed = idx >= 0 ? text.slice(0, idx) + text.slice(idx + 1) : text;
+      const ch = typed[typed.length - 1];
+      if (ch && /[a-zA-Z]/.test(ch)) {
+        dispatch({ type: 'ENTER_LETTER', letter: ch.toUpperCase() });
+      }
     }
-    // Reset input so we can detect next character
-    inputRef.current?.setNativeProps({ text: '' });
+    // Restore the sentinel so there is always one char to delete next time.
+    inputRef.current?.setNativeProps({ text: INPUT_SENTINEL });
   }, []);
 
-  const handleKeyPress = useCallback((e: { nativeEvent: { key: string } }) => {
-    if (e.nativeEvent.key === 'Backspace') {
-      dispatch({ type: 'BACKSPACE' });
-    }
+  const handleInputFocus = useCallback(() => {
+    inputRef.current?.setNativeProps({ text: INPUT_SENTINEL });
   }, []);
 
   const handleSelectWord = useCallback((wordId: string) => {
@@ -234,7 +249,8 @@ export default function GameScreen() {
         autoCapitalize="characters"
         autoCorrect={false}
         onChangeText={handleTextChange}
-        onKeyPress={handleKeyPress}
+        onFocus={handleInputFocus}
+        defaultValue={INPUT_SENTINEL}
         testID="keyboard-input"
         caretHidden
         blurOnSubmit={false}
